@@ -23,7 +23,25 @@ Your rover now has:
 
 ## 🚀 Quick Start
 
-### 1. System Test (Safe for Tissue Box!)
+### Docker (Recommended - Portable!)
+
+```bash
+cd ~/.openclaw/workspace/skills/galaxyrvr
+
+# Build container
+docker-compose build
+
+# Start dashboard
+docker-compose up -d
+
+# Open browser to http://localhost:5050
+```
+
+**See [DOCKER.md](DOCKER.md) for full deployment guide (Pi5, cloud, etc.)**
+
+### Local Installation
+
+#### 1. System Test (Safe for Tissue Box!)
 ```bash
 cd ~/.openclaw/workspace/skills/galaxyrvr
 ./test_all_systems.sh
