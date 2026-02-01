@@ -31,13 +31,22 @@ cd ~/.openclaw/workspace/skills/galaxyrvr
 
 This tests everything WITHOUT driving motors - safe while charging on tissue box.
 
-### 2. Manual Control
-```python
-python3 rover_control.py
-# Demo: moves servos, shows sensors
+### 2. Quick Status
+```bash
+python3 status.py
+# One-line health check: battery, WiFi, obstacles
 ```
 
-### 3. Battery Monitor
+### 3. Manual Control
+```python
+# Keyboard control (WASD)
+python3 keyboard_control.py
+
+# Or programmatic demo
+python3 rover_control.py
+```
+
+### 4. Battery Monitor
 ```python
 python3 battery_alert.py --once
 # Check battery status
@@ -46,7 +55,7 @@ python3 battery_alert.py
 # Continuous monitoring (5min intervals)
 ```
 
-### 4. Vision Test
+### 5. Vision Test
 ```python
 python3 vision.py
 # What does the rover see?
@@ -54,13 +63,27 @@ python3 vision.py
 # Find targets
 ```
 
-### 5. Mapping Test
+### 6. Mapping Test
 ```python
 python3 mapping.py
 # Demo: simulated exploration with map
 ```
 
-### 6. **Autonomous Exploration** (⚠️ ROVER MUST BE ON GROUND!)
+### 7. View Saved Maps
+```bash
+python3 map_viewer.py --list        # List all saved maps
+python3 map_viewer.py                # View most recent
+python3 map_viewer.py --wifi         # Show WiFi heatmap
+python3 map_viewer.py my_map.json    # View specific map
+```
+
+### 8. Calibration (for accurate odometry)
+```bash
+python3 calibrate.py
+# Measure actual movement to tune constants
+```
+
+### 9. **Autonomous Exploration** (⚠️ ROVER MUST BE ON GROUND!)
 ```bash
 # Safe mode (slow speeds, extra caution)
 python3 autonomous_explorer.py
@@ -84,6 +107,10 @@ skills/galaxyrvr/
 ├── charge_monitor.py          # Charge state detection
 ├── monitor.py                 # Real-time sensor dashboard
 ├── autonomous_explorer.py     # 🌟 Complete autonomous system
+├── keyboard_control.py        # Manual WASD driving
+├── status.py                  # Quick one-line status
+├── calibrate.py               # Odometry calibration helper
+├── map_viewer.py              # View saved exploration maps
 ├── test_all_systems.sh        # Safe system test
 ├── MONITORING.md              # Battery/sensor docs
 ├── MAPPING.md                 # Mapping system docs

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "homeassistant": {
+      "version": "1.0.0",
+      "installedAt": 1769884751260
+    },
+    "plex": {
+      "version": "1.0.0",
+      "installedAt": 1769885550356
+    },
+    "unifi": {
+      "version": "1.0.1",
+      "installedAt": 1769902647207
+    }
+  }
+}
