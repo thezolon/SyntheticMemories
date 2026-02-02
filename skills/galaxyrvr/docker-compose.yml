@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  galaxyrvr:
+    build: .
+    container_name: galaxyrvr-dashboard
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - ROVER_IP=${ROVER_IP:-192.168.10.118}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://localhost:11434}
+      - DASHBOARD_PORT=${DASHBOARD_PORT:-5050}
+    volumes:
+      # Mount for persistent maps
+      - ./maps:/app/maps
+      # Mount for logs
+      - ./logs:/app/logs
+    command: python web_dashboard.py
+    
+  # Optional: Run Ollama in container too
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: galaxyrvr-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
+  #   restart: unless-stopped
+
+# volumes:
+#   ollama-data:
