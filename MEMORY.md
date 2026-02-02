@@ -19,6 +19,8 @@
 - ✅ Show cost tier and rationale when recommending: **yes**
 - ✅ Never use High-Cost without explicit approval: **yes**
 
+**Preferences updated 2026-02-02:** model-recommendation in pre-task summaries; show cost tier and rationale; require explicit approval for High-Cost models.
+
 ---
 
 ## TODO
