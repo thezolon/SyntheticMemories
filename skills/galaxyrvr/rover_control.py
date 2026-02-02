@@ -113,10 +113,15 @@ class GalaxyRVR:
                 await self.ws.send(json.dumps(cmd))
                 await asyncio.sleep(0.1)  # 10Hz
                 
+            except websockets.exceptions.ConnectionClosedError:
+                logger.warning("Send: WebSocket connection closed")
+                break
             except Exception as e:
                 if self.running:
                     logger.error(f"Send error: {e}")
-                break
+                # Don't break - keep trying to send
+                await asyncio.sleep(0.1)
+                continue
     
     async def _receive_loop(self):
         """Receive sensor data"""
@@ -144,10 +149,15 @@ class GalaxyRVR:
                     
             except asyncio.TimeoutError:
                 continue
+            except websockets.exceptions.ConnectionClosedError:
+                logger.warning("WebSocket connection closed")
+                break
             except Exception as e:
                 if self.running:
                     logger.error(f"Receive error: {e}")
-                break
+                # Don't break - keep trying to receive
+                await asyncio.sleep(0.1)
+                continue
     
     # ==================== Movement Commands ====================
     

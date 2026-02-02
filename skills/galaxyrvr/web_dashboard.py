@@ -46,12 +46,27 @@ vision = None
 battery = None
 wifi = None
 control_active = False
+rover_loop = None
+rover_thread = None
+
+def run_rover_loop():
+    """Run rover event loop in background thread"""
+    global rover_loop
+    rover_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(rover_loop)
+    rover_loop.run_forever()
 
 def get_or_create_rover():
     """Get global rover instance"""
-    global rover
+    global rover, rover_loop, rover_thread
     if rover is None:
         rover = GalaxyRVR(host=ROVER_IP)
+        
+        # Start background event loop for rover
+        if rover_thread is None:
+            rover_thread = threading.Thread(target=run_rover_loop, daemon=True)
+            rover_thread.start()
+            
     return rover
 
 def get_or_create_map():
@@ -80,13 +95,15 @@ def status():
     try:
         r = get_or_create_rover()
         
-        # Run async connect in thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        connected = loop.run_until_complete(r.connect())
-        
-        if not connected:
-            return jsonify({"connected": False, "error": "Failed to connect"})
+        # Check if already connected, otherwise connect once
+        if not r.connected:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            connected = loop.run_until_complete(r.connect())
+            loop.close()
+            
+            if not connected:
+                return jsonify({"connected": False, "error": "Failed to connect"})
         
         sensors = r.get_sensors()
         
@@ -109,7 +126,7 @@ def status():
             battery_status = "unknown"
         
         return jsonify({
-            "connected": True,
+            "connected": r.connected,
             "battery": {
                 "voltage": battery_v,
                 "percent": battery_pct,
@@ -247,7 +264,7 @@ def handle_disconnect():
 @socketio.on('control')
 def handle_control(data):
     """Handle control commands"""
-    global control_active
+    global control_active, rover_loop
     
     command = data.get('command')
     speed = data.get('speed', 50)
@@ -255,14 +272,17 @@ def handle_control(data):
     try:
         r = get_or_create_rover()
         
-        # Connect if needed
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        if not control_active:
-            loop.run_until_complete(r.connect())
-            control_active = True
+        # Connect if needed (run in background loop)
+        if not control_active or not r.connected:
+            future = asyncio.run_coroutine_threadsafe(r.connect(), rover_loop)
+            connected = future.result(timeout=5)
+            if connected:
+                control_active = True
+            else:
+                emit('control_response', {'success': False, 'error': 'Failed to connect to rover'})
+                return
         
-        # Execute command
+        # Execute command (synchronous motor setters)
         if command == 'forward':
             r.forward(speed)
         elif command == 'backward':
@@ -302,7 +322,7 @@ def run_server(host='0.0.0.0', port=None):
     print("Press Ctrl+C to stop")
     print("=" * 60)
     
-    socketio.run(app, host=host, port=port, debug=False)
+    socketio.run(app, host=host, port=port, debug=False, allow_unsafe_werkzeug=True)
 
 if __name__ == '__main__':
     run_server()
