@@ -1,0 +1,24 @@
+service:
+  port: 8768
+  host: 0.0.0.0
+
+ollama:
+  host: http://host.docker.internal:11434
+  model: nomic-embed-text
+  timeout: 30
+
+lancedb:
+  path: /data/memory.lance
+  
+memory:
+  default_tier: user
+  importance_threshold: 5  # Min importance to store
+  curate_threshold: 7      # Min importance for MEMORY.md
+  
+tiers:
+  global:
+    retention_days: -1  # Forever
+  user:
+    retention_days: 365
+  session:
+    retention_days: 30

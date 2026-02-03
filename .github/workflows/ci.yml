@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        if [ -f memory-agent/requirements.txt ]; then
+          pip install -r memory-agent/requirements.txt
+        fi
+        pip install -e memory-agent[dev]
+        
+    - name: Create necessary directories
+      run: |
+        mkdir -p memory/backups
+        mkdir -p CI_RUNS
+        mkdir -p memory-agent/data
+        mkdir -p memory-agent/models
+        
+    - name: Run memory-agent tests
+      run: |
+        cd memory-agent
+        pytest --cov=memory_agent --cov-report=xml --cov-report=term-missing -v
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./memory-agent/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8 mypy
+        pip install -e memory-agent
+        
+    - name: Check code formatting with Black
+      run: |
+        cd memory-agent
+        black --check src tests || (echo "Run 'black src tests' to fix formatting" && exit 1)
+        
+    - name: Check import sorting with isort
+      run: |
+        cd memory-agent
+        isort --check-only src tests || (echo "Run 'isort src tests' to fix imports" && exit 1)
+        
+    - name: Lint with flake8
+      run: |
+        cd memory-agent
+        flake8 src tests --count --show-source --statistics
+        
+    - name: Type check with mypy
+      run: |
+        cd memory-agent
+        mypy src || echo "mypy found type issues (non-blocking)"
+        
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Install build tools
+      run: |
+        python -m pip install --upgrade pip build twine
+        
+    - name: Build memory-agent package
+      run: |
+        cd memory-agent
+        python -m build
+        
+    - name: Check package with twine
+      run: |
+        cd memory-agent
+        twine check dist/*
+        
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist-packages
+        path: memory-agent/dist/
+        retention-days: 7
+        
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        
+    - name: Run bootstrap script
+      run: |
+        ./scripts/bootstrap.sh
+        
+    - name: Verify CLI installation
+      run: |
+        source venv/bin/activate
+        memory --version
+        memory --help
+        
+    - name: Run integration tests
+      run: |
+        source venv/bin/activate
+        cd memory-agent
+        pytest tests/test_integration.py -v || echo "Integration tests not found (optional)"

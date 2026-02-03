@@ -1,0 +1,9 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+lancedb==0.18.0
+ollama==0.4.7
+pydantic==2.10.6
+pyyaml==6.0.2
+python-dateutil==2.9.0
+aiofiles==24.1.0
+requests==2.32.3

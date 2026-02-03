@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Memory - OpenClaw</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #3a3a3a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent: #00d4ff;
+            --accent-dim: #0088aa;
+            --border: #404040;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --error: #ff4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--accent);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2em;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: var(--bg-tertiary);
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+        }
+
+        .stat-value {
+            color: var(--accent);
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-size: 1em;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-dim);
+        }
+
+        button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            background: var(--bg-secondary);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters-left {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .filters-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .page-info {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        select {
+            padding: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .memories-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .memory-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .memory-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .memory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .memory-meta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .badge.tier-global {
+            background: #4444ff;
+            color: white;
+        }
+
+        .badge.tier-user {
+            background: #00ff88;
+            color: var(--bg-primary);
+        }
+
+        .badge.tier-session {
+            background: #ffaa00;
+            color: var(--bg-primary);
+        }
+
+        .importance {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            font-weight: bold;
+            background: var(--bg-tertiary);
+        }
+
+        .importance.high {
+            background: var(--success);
+            color: var(--bg-primary);
+        }
+
+        .importance.medium {
+            background: var(--warning);
+            color: var(--bg-primary);
+        }
+
+        .importance.low {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+
+        .similarity {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.75em;
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-weight: bold;
+        }
+
+        .memory-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin: 15px 0;
+        }
+
+        .memory-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .timestamp {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+        }
+
+        .memory-id {
+            color: var(--text-secondary);
+            font-size: 0.75em;
+            font-family: monospace;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state h3 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent);
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            color: var(--accent);
+            font-size: 1.5em;
+        }
+
+        .close-modal {
+            background: none;
+            color: var(--text-secondary);
+            font-size: 1.5em;
+            padding: 5px 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-family: inherit;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            border: 3px solid var(--bg-tertiary);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-indicator.healthy {
+            background: var(--success);
+        }
+
+        .status-indicator.unhealthy {
+            background: var(--error);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🧠 Advanced Memory</h1>
+            <div class="subtitle">
+                <span class="status-indicator healthy" id="statusIndicator"></span>
+                <span id="statusText">Connected to Ollama</span>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-label">Total Memories</div>
+                    <div class="stat-value" id="totalCount">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Embedding Model</div>
+                    <div class="stat-value" id="modelName">nomic-embed-text</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Semantic search... (e.g., 'user preferences', 'VoIP projects')">
+                <button id="searchBtn">🔍 Search</button>
+                <button class="secondary" id="clearBtn">Clear</button>
+            </div>
+            <button id="addBtn">+ Add Memory</button>
+        </div>
+
+        <div class="filters">
+            <div class="filters-left">
+                <select id="tierFilter">
+                    <option value="">All Tiers</option>
+                    <option value="global">Global</option>
+                    <option value="user">User</option>
+                    <option value="session">Session</option>
+                </select>
+                <select id="importanceFilter">
+                    <option value="0">All Importance</option>
+                    <option value="7">Important (7+)</option>
+                    <option value="5">Medium (5+)</option>
+                </select>
+                <select id="sortBy">
+                    <option value="recent">Most Recent</option>
+                    <option value="importance">Highest Importance</option>
+                    <option value="similarity">Best Match</option>
+                </select>
+            </div>
+            <div class="filters-right">
+                <span class="page-info" id="pageInfo">Showing 0-0 of 0</span>
+                <select id="perPageSelect">
+                    <option value="10">10 per page</option>
+                    <option value="25" selected>25 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                </select>
+                <button class="secondary" id="prevPage">← Prev</button>
+                <button class="secondary" id="nextPage">Next →</button>
+            </div>
+        </div>
+
+        <div id="memoriesContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <div>Loading memories...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Memory Modal -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Add Memory</h2>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="addMemoryForm">
+                <div class="form-group">
+                    <label for="memoryContent">Content *</label>
+                    <textarea id="memoryContent" required placeholder="What should I remember?"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="memoryTier">Tier</label>
+                        <select id="memoryTier">
+                            <option value="user">User</option>
+                            <option value="global">Global</option>
+                            <option value="session">Session</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="memoryImportance">Importance (optional)</label>
+                        <select id="memoryImportance">
+                            <option value="">Auto-score</option>
+                            <option value="10">10 - Critical</option>
+                            <option value="9">9 - Very High</option>
+                            <option value="8">8 - High</option>
+                            <option value="7">7 - Important</option>
+                            <option value="6">6 - Medium-High</option>
+                            <option value="5">5 - Medium</option>
+                            <option value="4">4 - Low</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit">💾 Save Memory</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

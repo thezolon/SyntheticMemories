@@ -1,0 +1,21 @@
+services:
+  advanced-memory:
+    build: .
+    container_name: advanced-memory
+    ports:
+      - "8768:8768"
+    volumes:
+      - ./data:/data  # LanceDB storage
+      - /home/zolon/.openclaw/workspace:/workspace:ro  # Read-only access to workspace for curation
+      - ./config.yml:/app/config.yml:ro
+    environment:
+      - CONFIG_PATH=/app/config.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8768/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

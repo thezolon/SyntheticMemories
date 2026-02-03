@@ -1,0 +1,32 @@
+#!/bin/bash
+# Advanced Memory CLI dispatcher
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+COMMAND="$1"
+shift
+
+case "$COMMAND" in
+    store)
+        exec "$SCRIPT_DIR/store.sh" "$@"
+        ;;
+    recall)
+        exec "$SCRIPT_DIR/recall.sh" "$@"
+        ;;
+    curate)
+        exec "$SCRIPT_DIR/curate.sh" "$@"
+        ;;
+    status)
+        exec "$SCRIPT_DIR/status.sh" "$@"
+        ;;
+    *)
+        echo "Advanced Memory CLI"
+        echo ""
+        echo "Usage:"
+        echo "  advanced-memory store <content> [--tier global|user|session] [--importance 0-10]"
+        echo "  advanced-memory recall <query> [--tier global|user|session] [--limit N]"
+        echo "  advanced-memory curate --from <file.md> [--threshold N] [--dry-run]"
+        echo "  advanced-memory status"
+        exit 1
+        ;;
+esac
